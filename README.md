@@ -17,6 +17,7 @@
 ![Sky War](https://user-images.githubusercontent.com/86841843/150900170-e6521443-5cdd-42b4-87e8-25c187451d3e.png)
 ## Drawing the Player
 - So first we need to create our player which gonna be a rectangle its a 3 steps work first we will create a scene using `QGraphicsScene` then implement `QGraphicsRectItem` to create an item that will be put into the scene and finally add a view to visualize the scene and for that we will use `QGraphicsView`.
+* `main.cpp`
 ```cpp
 #include <QApplication>
 #include <QGraphicsScene>
@@ -33,7 +34,6 @@ QGraphicsScene * scene = new QGraphicsScene();
 // create an item to put into the scene
 QGraphicsRectItem * rect = new QGraphicsRectItem();
 rect->setRect(0,0,100,100);
-
 // add the item to the scene
 scene->addItem(rect);
 
