@@ -6,7 +6,7 @@
 - [Moving the Player](#Moving-the-Player)
 - [Shooting](#Shooting)
 - [Refinement](#Refinement)
-- 5
+- [Adding Enemies](#Adding-Enemies)
 - 6
 - 7 
 ## Overview
@@ -121,7 +121,7 @@ Bullet::Bullet(){
   timer->start(50);
 }
 ```
-- and then in that same file we will define 
+- and then to make the bullet move up we will substract from the `y()`:
 ```cpp
 void Bullet::move(){
   // move bullet up
@@ -140,11 +140,11 @@ else if (event->key() == Qt::Key_Space){
 - working on this part we faced an issue which is that the scroll bar get bigger and bigger every time our bullet get far   
 
 ![Swar 2022-01-25 17-16-31](https://user-images.githubusercontent.com/86841843/151015893-73514ad4-68db-4999-96a3-802a7f3a93cf.gif)
-- easy we are solving this problem by adding  these tow lines in our `main.cpp` so basically it makes our Horizontal Scroll Bar and Vertical Scroll Bar disabled :
+- Easy we are solving this problem by adding  these tow lines in our `main.cpp` so basically it makes our Horizontal Scroll Bar and Vertical Scroll Bar disabled :
 ```cpp
 view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
- ```
+```
 - we get this result :
 
 ![bullets](https://user-images.githubusercontent.com/86841843/150952024-5c9225ef-24a5-46e0-ab2d-e81405e1e117.gif)
@@ -157,3 +157,76 @@ view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   scene->setSceneRect(0,0,800,600);
 ```
 - and then we will make our player appear in the meddle_bottom so for that we are using `setPos` which is a public functions of `QGraphicsItem` Class
+```cpp
+//location  of  the  player
+player->setPos(view->width()/2.3,view->height()/1.03- player->rect().height());
+```
+ - here we are :
+ 
+ ![90](https://user-images.githubusercontent.com/86841843/151165872-ca109f7d-f38f-430b-9a32-583b1d76f23c.png)
+ 
+- while progressing in our project we figure out that making the player move up and  down is not serving to mush so we are going to prevent the player from doing that by deleting  this tow condition from our code in `MyRect.cpp`  :
+```cpp
+else if (event->key() == Qt::Key_Up){
+setPos(x(),y()-10);
+}
+else if (event->key() == Qt::Key_Down){
+setPos(x(),y()+10);
+}
+```
+- also in that same file we will try and prevent the player from going off the screen on the left and right eventually our code will be looking like this :
+```cpp
+  if (event->key() == Qt::Key_Left){
+  if (pos().x() > 0) // prevent the player frome going off the screen on the left
+  setPos(x()-10,y());  
+  }
+  else if (event->key() == Qt::Key_Right){
+  if (pos().x() + 100 < 800) // prevent the player frome going off the screen on the right
+  setPos(x()+10,y());
+  }
+```
+- Now there is an other thing we should fix , it's that when we shoot bullet they still in the memory and that's a waste , so we are heading to `bullet.cpp` and adding this condition in the `void  Bullet::move()` :
+```cpp
+if (pos().y() + rect().height() < 0){
+  scene()->removeItem(this);
+  delete this;
+  }
+```
+## Adding Enemies
+- now we will add some enemies so our player can fight them and have funn , so let's get thro the processe :
+- so let's go ahead and add a source and header files `Enemy.cpp` and `Enemy.h`
+- Now we are going to create a class in our enemy header file then add constructer and  a slot to it :
+```cpp
+class Enemy: public QObject,public QGraphicsRectItem{
+  Q_OBJECT
+public:
+  Enemy();
+public slots:
+  void move();
+};
+```
+- After that let's move to our `Enemy.cpp` file and make the enemy appear randomly then create it's shape after that we will connect it to a timer that will call the move slot of the enemy :
+```cpp
+Enemy::Enemy(): QObject(), QGraphicsRectItem(){
+  //set random position
+  int random_number = rand() % 700;
+  setPos(random_number,0);
+  // drew the rect
+  setRect(0,0,100,100);
+  // connect
+  QTimer * timer = new QTimer(this);
+  connect(timer,SIGNAL(timeout()),this,SLOT(move()));
+  timer->start(50);
+}
+```
+- And in order to make the enemy move down we will add to the `y()`:
+```cpp
+void Enemy::move(){
+  // move enemy down
+  setPos(x(),y()+5);
+  if (pos().y() + rect().height() < 0){
+  scene()->removeItem(this);
+  delete this;
+  }
+}
+```
