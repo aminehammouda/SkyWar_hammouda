@@ -7,7 +7,7 @@
 - [Shooting](#Shooting)
 - [Refinement](#Refinement)
 - [Adding Enemies](#Adding-Enemies)
-- 6
+- [Adding Player Health and Score](#Adding-Player-Health-and-Score)
 - 7 
 ## Overview
 
@@ -193,9 +193,9 @@ if (pos().y() + rect().height() < 0){
   }
 ```
 ## Adding Enemies
-- now we will add some enemies so our player can fight them and have funn , so let's get thro the processe :
+- now we will add some enemies so our player can fight them and have funn , let's get thro the processe :
 - so let's go ahead and add a source and header files `Enemy.cpp` and `Enemy.h`
-- Now we are going to create a class in our enemy header file then add constructer and  a slot to it :
+- Now we are going to create the enemy class in our enemy header file then add a constructer and  a slot to it :
 ```cpp
 class Enemy: public QObject,public QGraphicsRectItem{
   Q_OBJECT
@@ -230,3 +230,52 @@ void Enemy::move(){
   }
 }
 ```
+- So now in our `main.cpp` we will include `<Qtimer>` because we want to connect a timer to a function that constantly create enemies
+```cpp
+// spawn enemies
+  QTimer * timer = new QTimer();
+  QObject::connect(timer,SIGNAL(timeout()),player,SLOT(spawn()));
+  timer->start(2000);
+```  
+- After that we will go ahead and add the spawn slot in `MyRect` class located in `MyRect.h` and make sure that the object inherits from `<QObject>` by including it :
+```cpp
+#include <QGraphicsRectItem>
+#include <QObject>
+
+class MyRect:public QObject, public QGraphicsRectItem{
+  Q_OBJECT
+public:
+  void keyPressEvent(QKeyEvent * event);
+public slots:
+  void spawn();
+};
+```
+- Now let's move to the `MyRect.cpp` to create our enemies :
+```cpp
+void MyRect::spawn(){
+  // create an enemy
+  Enemy * enemy = new Enemy();
+  scene()->addItem(enemy);
+}
+```
+- After that in the bullet move slot  located in our `bullet.cpp` we will make the bullet destroy the enemy by deleting both when they collides :
+```cpp
+void Bullet::move(){
+  // if bullet collides with enemy, destroy both
+  QList<QGraphicsItem *> colliding_items = collidingItems();
+  for (int i = 0, n = colliding_items.size(); i < n; ++i){
+  if (typeid(*(colliding_items[i])) == typeid(Enemy)){
+  // remove them both
+  scene()->removeItem(colliding_items[i]);
+  scene()->removeItem(this);
+  // delete them both
+  delete colliding_items[i];
+  delete this;
+  return;
+  }
+  }
+```
+- here is our result :
+
+![lol](https://user-images.githubusercontent.com/86841843/151475044-fb0b44dd-6529-49af-b2a6-b83b84eb7d64.gif)
+## Adding Player Health and Score
