@@ -8,7 +8,9 @@
 - [Refinement](#Refinement)
 - [Adding Enemies](#Adding-Enemies)
 - [Adding Player Health and Score](#Adding-Player-Health-and-Score)
-- 7 
+- [Adding Sound Effects and Music](#Adding-Sound-Effects-and-Music)
+- [Adding Graphics](#Adding-Graphics)
+- [Conclusion](#Conclusion)
 ## Overview
 
 - In this final project we chooses to work on a game that's gonna be called "SKY WAR" it is about a war plane that fight other enemy planes. We are aiming to make it an enjoyable game with an attractive look. We will be going over the various stapes of making this project from 0% to 100% . 
@@ -279,3 +281,184 @@ void Bullet::move(){
 
 ![lol](https://user-images.githubusercontent.com/86841843/151475044-fb0b44dd-6529-49af-b2a6-b83b84eb7d64.gif)
 ## Adding Player Health and Score
+- so before continuing the work on our project we will make our main.cpp cleaner by taking all the code that used to be there and put it inside a new class we will call `game`  that will derives from `QGraphicsView` and has a pointer to the scene and a pointer to the player 
+-  `Game.cpp`
+```cpp
+Game * game;
+int main(int argc, char *argv[]){
+  QApplication a(argc, argv);
+  game = new Game();
+  game->show();
+  return  a.exec();
+}
+```
+- `Game.h`
+```cpp
+class Game: public QGraphicsView{
+public:
+  Game(QWidget * parent=0);
+  QGraphicsScene * scene;
+  Player * player;
+};
+```
+- now we will create a class in the `Score.h` file with a constructor called  `Score` that take parent as an optional parameter also add a member function that add to the score called `increase` and a getter to return the score `getScore`  and then add a private variable also called `score` to keep track of what the current score is (we included `<QGraphicsTextItem>`) 
+```cpp
+class Score: public QGraphicsTextItem{
+public:
+  Score(QGraphicsItem * parent=0);
+  void increase();
+  int getScore();
+private:
+  int score;
+};
+```
+- now in the `Score.cpp` we will initialize the score to 0 and draw the text (we included `<QFont>`)
+```cpp
+Score::Score(QGraphicsItem *parent): QGraphicsTextItem(parent){
+  // initialize the score to 0
+  score = 0;
+  // draw the text
+  setPlainText(QString("Score: ") + QString::number(score)); // Score: 0
+  setDefaultTextColor(Qt::blue);
+  setFont(QFont("times",16));
+}
+```
+- `increase()`
+```cpp
+void Score::increase(){
+  score++;
+  setPlainText(QString("Score: ") + QString::number(score)); // in order to update the text
+}
+```
+- `getScore()`
+```cpp
+int Score::getScore(){
+  return score;
+}
+```
+- now for the health it the same as we did for the score but with a little change first in `Health.h` 
+```cpp
+class Health: public QGraphicsTextItem{
+public:
+  Health(QGraphicsItem * parent=0);
+  void decrease();
+  int getHealth();
+private:
+  int health;
+};
+```
+- now in `health.cpp`
+```cpp
+Health::Health(QGraphicsItem *parent): QGraphicsTextItem(parent){
+  // initialize the health to 0
+  health = 3;
+  // draw the text
+  setPlainText(QString("Health: ") + QString::number(health)); // Health: 3
+  setDefaultTextColor(Qt::red);
+  setFont(QFont("times",16));
+}
+```
+- `decrease()`
+```cpp
+void Health::decrease(){
+  health--;
+  setPlainText(QString("Health: ") + QString::number(health)); // Health: 2
+}
+```
+- `getHealth()`
+```cpp
+int Health::getHealth(){
+  return health;
+}
+```
+- now we need to give our game class in `Game.h` file a pointer for the score and an other for health not to forget mentioning that we included `"Health.h"` and `"Score.h"`
+```cpp
+  Score * score;
+  Health * health;
+};
+``` 
+- after that we are heading to `Game.cpp` to make the score and health
+```cpp
+// create the score/health
+  score = new Score();
+  scene->addItem(score);
+  health = new Health();
+  health->setPos(health->x(),health->y()+25);
+  scene->addItem(health);
+```
+- now in order to really make the score increase we will go inside the `Bullet.cpp` file spicily in the move method we will access the game score object and call it's `increase()` member function and before that we have added `extern  Game  *  game;` to inform that there  is  an  external  global  object  called  game
+```cpp
+// increase the score
+  game->score->increase();
+```
+- to make the health really decrees we will do the same as we did for score in the `bullet.cpp` file but this time we will do it inside the `enemy.cpp` 
+```cpp
+//decrease the health
+  game->health->decrease();
+```
+- here is our result 
+
+![Swar 2022-02-06 10-59-51](https://user-images.githubusercontent.com/86841843/152676014-3cd0ff66-a1b7-4537-b61f-8d9e38f001e7.gif)
+## Adding Sound Effects and Music
+- to make our game more enjoyable we need to add some sound effects and music
+- so first we add a resource file called `res`  then add a prefix called sounds inside of it then we can add whatever sounds and music we like to 
+- so to play the back ground music we need to add `multimedia` module in the `Swar.pro`
+- now in the `game.cpp` file we will include `<QMediaPlayer>` 
+```cpp
+// play background music
+  QMediaPlayer * music = new QMediaPlayer();
+  music->setMedia(QUrl("qrc:/sounds/bgsound.mp3"));
+  music->play();
+```
+- now the next thing we want to do is to play a bullet sound every time our player shoots a bullet  
+- so first in the `player.h` file we will keep another media player as a privet member for the player called `bulletsound`
+```cpp
+private:
+  QMediaPlayer * bulletsound;
+```
+-  now let's initialize it in the `Player.cpp` file
+```cpp
+Player::Player(QGraphicsItem *parent): QGraphicsRectItem(parent){
+  bulletsound = new QMediaPlayer();
+  bulletsound->setMedia(QUrl("qrc:/sounds/bullet.wav"));
+}
+```
+- after that we will move to `void Player::keyPressEvent(QKeyEvent *event)` spicily  in the `else if (event->key() == Qt::Key_Space)` condition we will make the bullet sound plays every time we press space
+```cpp
+//  play  bulletsound
+  if  (bulletsound->state() == QMediaPlayer::PlayingState){
+  bulletsound->setPosition(0);
+  }
+  else if (bulletsound->state() == QMediaPlayer::StoppedState){
+  bulletsound->play();
+  }
+```
+## Adding Graphics
+- now we will add some images to give the game more esthetics 
+- so first we will add a prefix in the res file created earlier while adding sounds let's call it images this time and the we will include all the images we are adding to our game in it. it's to similar to what we did in the last part.
+- now we will replace `<QGraphicsRectItem>` to `<QGraphicsPixmapItem>` because it contain  `QPixmap` and `QImage` that are very necessary to proceed in our work
+- we will go ahead and start with the bullet in `Bullet.cpp` inside `Bullet::Bullet(QGraphicsItem  *parent):  QObject(),  QGraphicsPixmapItem(parent)`
+```cpp
+// set bullet image
+  setPixmap(QPixmap(":/images/bullet.png"));
+```
+- `Enemy.cpp` inside `Enemy::Enemy(QGraphicsItem  *parent):  QObject(),  QGraphicsPixmapItem(parent)`
+```cpp
+// set enemy image
+  setPixmap(QPixmap(":/images/enemy.png"));
+```
+- `Player.cpp` inside `Player::Player(QGraphicsItem  *parent):  QGraphicsPixmapItem(parent)`
+```cpp
+  // set player image
+  setPixmap(QPixmap(":/images/player.png"));
+```
+- `Game.cpp` inside `Game::Game(QWidget  *parent)`
+```cpp
+  // set the background
+  setBackgroundBrush(QBrush(QImage(":/images/bg.png")));
+```
+- here is our final result 
+
+![Swar 2022-02-06 12-47-50](https://user-images.githubusercontent.com/86841843/152679461-2168c030-930f-4195-8d9a-52dc3d03821f.gif)
+## Conclusion
+- Working on this project we have made a lot of mistakes and overcome a lot of deficits , learned new thigs and enhanced our skills . It was a long journey since we started and finally here we are , thank for sticking this long . 
